@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/viaje_service.dart';
 import '../mis_viajes/detalle_viaje_conductor_screen.dart';
+import '../chat/pagina_individual.dart';
+import '../chat/chat_grupal.dart';
 
 class NavigationService {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -78,6 +80,56 @@ class NavigationService {
       }
     } else {
       print('❌ Navigator no disponible para navegar al detalle del viaje');
+    }
+  }
+
+  /// Navegar al chat individual con un usuario específico
+  static Future<void> navigateToChatIndividual(String rutAmigo, String nombreAmigo) async {
+    final navigator = navigatorKey.currentState;
+    if (navigator != null) {
+      print('🔄 Navegando al chat individual con: $nombreAmigo ($rutAmigo)');
+      
+      try {
+        await navigator.push(
+          MaterialPageRoute(
+            builder: (context) => PaginaIndividualWebSocket(
+              rutAmigo: rutAmigo,
+              nombre: nombreAmigo,
+            ),
+          ),
+        );
+      } catch (e) {
+        print('❌ Error navegando al chat individual: $e');
+        // Fallback: navegar a la pantalla de chat principal
+        await navigateTo('/chat');
+      }
+    } else {
+      print('❌ Navigator no disponible para navegar al chat individual');
+    }
+  }
+
+  /// Navegar al chat grupal de un viaje específico
+  static Future<void> navigateToChatGrupal(String idViaje, String? nombreViaje) async {
+    final navigator = navigatorKey.currentState;
+    if (navigator != null) {
+      print('🔄 Navegando al chat grupal del viaje: $idViaje');
+      
+      try {
+        await navigator.push(
+          MaterialPageRoute(
+            builder: (context) => ChatGrupalScreen(
+              idViaje: idViaje,
+              nombreViaje: nombreViaje,
+            ),
+          ),
+        );
+      } catch (e) {
+        print('❌ Error navegando al chat grupal: $e');
+        // Fallback: navegar a la pantalla de chat principal
+        await navigateTo('/chat');
+      }
+    } else {
+      print('❌ Navigator no disponible para navegar al chat grupal');
     }
   }
 

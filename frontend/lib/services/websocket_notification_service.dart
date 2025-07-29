@@ -826,6 +826,7 @@ class WebSocketNotificationService {
               break;
             case 'chat_grupal':
               _navigateToChatGrupal(data);
+              break;
             case 'nueva_peticion_soporte':
               print('📱 Tap en notificación de solicitud de soporte');
               _navigateToAdminPanel();
@@ -857,39 +858,39 @@ class WebSocketNotificationService {
   static void _navigateToChatIndividual(Map<String, dynamic> data) {
     try {
       print('🔄 Navegando a chat individual...');
-      // final rutEmisor = data['rutEmisor'] ?? '';
-      // final nombreEmisor = data['nombreEmisor'] ?? 'Usuario';
+      final rutEmisor = data['rutEmisor'] ?? '';
+      final nombreEmisor = data['nombreEmisor'] ?? 'Usuario';
       
-      // TODO: Implementar navegación al chat individual
-      // NavigationService.navigateToChatIndividual(rutEmisor, nombreEmisor);
-      
-      // Por ahora, navegar a notificaciones como fallback
-      _navigateToNotifications();
+      if (rutEmisor.isNotEmpty) {
+        NavigationService.navigateToChatIndividual(rutEmisor, nombreEmisor);
+      } else {
+        print('⚠️ No se encontró rutEmisor para navegar al chat individual');
+        _navigateToNotifications();
+      }
     } catch (e) {
       print('❌ Error navegando a chat individual: $e');
       _navigateToNotifications();
     }
   }
-  
+
   /// Navegar al chat grupal
   static void _navigateToChatGrupal(Map<String, dynamic> data) {
     try {
       print('🔄 Navegando a chat grupal...');
-      // final grupoId = data['grupoId'] ?? '';
-      // final nombreGrupo = data['nombreGrupo'] ?? 'Chat Grupal';
+      final grupoId = data['grupoId'] ?? data['idViaje'] ?? '';
+      final nombreGrupo = data['nombreGrupo'] ?? data['nombreViaje'] ?? 'Chat Grupal';
       
-      // TODO: Implementar navegación al chat grupal
-      // NavigationService.navigateToChatGrupal(grupoId, nombreGrupo);
-      
-      // Por ahora, navegar a notificaciones como fallback
-      _navigateToNotifications();
+      if (grupoId.isNotEmpty) {
+        NavigationService.navigateToChatGrupal(grupoId, nombreGrupo);
+      } else {
+        print('⚠️ No se encontró grupoId para navegar al chat grupal');
+        _navigateToNotifications();
+      }
     } catch (e) {
       print('❌ Error navegando a chat grupal: $e');
       _navigateToNotifications();
     }
-  }
-  
-  /// Navegar al panel de administrador
+  }  /// Navegar al panel de administrador
   static void _navigateToAdminPanel() {
     print('🔄 Navegando al panel de administrador...');
     NavigationService.navigateToAdminPanel();
@@ -925,17 +926,31 @@ class WebSocketNotificationService {
       final rutEmisor = notification['rutEmisor'] ?? '';
       final chatId = notification['chatId'] ?? '';
       
-      // Mostrar notificación con el mensaje
-      _showLocalNotification(
-        title: '💬 $nombreEmisor',
-        body: mensaje.length > 50 ? '${mensaje.substring(0, 50)}...' : mensaje,
-        payload: json.encode({
-          'tipo': 'chat_individual',
-          'rutEmisor': rutEmisor,
-          'nombreEmisor': nombreEmisor,
-          'chatId': chatId,
-        }),
-      );
+      // Verificar si el usuario está actualmente en este chat para evitar notificación redundante
+      final currentRoute = NavigationService.navigatorKey.currentState?.context;
+      bool isInSameChat = false;
+      
+      if (currentRoute != null) {
+        // Aquí podrías agregar lógica para verificar si está en el mismo chat
+        // Por ahora siempre mostraremos la notificación
+        isInSameChat = false;
+      }
+      
+      if (!isInSameChat) {
+        // Mostrar notificación con el mensaje
+        _showLocalNotification(
+          title: '💬 $nombreEmisor',
+          body: mensaje.length > 50 ? '${mensaje.substring(0, 50)}...' : mensaje,
+          payload: json.encode({
+            'tipo': 'chat_individual',
+            'rutEmisor': rutEmisor,
+            'nombreEmisor': nombreEmisor,
+            'chatId': chatId,
+          }),
+        );
+      } else {
+        print('💬 Usuario está en el mismo chat, no mostrar notificación');
+      }
       
       print('✅ Notificación de chat individual procesada correctamente');
     } catch (e) {
@@ -959,21 +974,35 @@ class WebSocketNotificationService {
       final nombreEmisor = notification['nombreEmisor'] ?? 'Usuario';
       final mensaje = notification['mensaje'] ?? '';
       final rutEmisor = notification['rutEmisor'] ?? '';
-      final grupoId = notification['grupoId'] ?? '';
-      final nombreGrupo = notification['nombreGrupo'] ?? 'Chat Grupal';
+      final grupoId = notification['grupoId'] ?? notification['idViaje'] ?? '';
+      final nombreGrupo = notification['nombreGrupo'] ?? notification['nombreViaje'] ?? 'Chat Grupal';
       
-      // Mostrar notificación con el mensaje grupal
-      _showLocalNotification(
-        title: '👥 $nombreGrupo',
-        body: '$nombreEmisor: ${mensaje.length > 50 ? '${mensaje.substring(0, 50)}...' : mensaje}',
-        payload: json.encode({
-          'tipo': 'chat_grupal',
-          'rutEmisor': rutEmisor,
-          'nombreEmisor': nombreEmisor,
-          'grupoId': grupoId,
-          'nombreGrupo': nombreGrupo,
-        }),
-      );
+      // Verificar si el usuario está actualmente en este chat grupal para evitar notificación redundante
+      final currentRoute = NavigationService.navigatorKey.currentState?.context;
+      bool isInSameGroupChat = false;
+      
+      if (currentRoute != null) {
+        // Aquí podrías agregar lógica para verificar si está en el mismo chat grupal
+        // Por ahora siempre mostraremos la notificación
+        isInSameGroupChat = false;
+      }
+      
+      if (!isInSameGroupChat) {
+        // Mostrar notificación con el mensaje grupal
+        _showLocalNotification(
+          title: '👥 $nombreGrupo',
+          body: '$nombreEmisor: ${mensaje.length > 50 ? '${mensaje.substring(0, 50)}...' : mensaje}',
+          payload: json.encode({
+            'tipo': 'chat_grupal',
+            'rutEmisor': rutEmisor,
+            'nombreEmisor': nombreEmisor,
+            'grupoId': grupoId,
+            'nombreGrupo': nombreGrupo,
+          }),
+        );
+      } else {
+        print('👥 Usuario está en el mismo chat grupal, no mostrar notificación');
+      }
       
       print('✅ Notificación de chat grupal procesada correctamente');
     } catch (e) {

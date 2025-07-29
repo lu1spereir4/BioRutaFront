@@ -352,7 +352,12 @@ class _PaginaIndividualWebSocketState extends State<PaginaIndividualWebSocket> {
               WebSocketNotificationService.showLocalNotification(
                 title: '💬 ${widget.nombre}',
                 body: nuevoMensaje.text,
-                payload: 'chat_individual_${widget.rutAmigo}',
+                payload: json.encode({
+                  'tipo': 'chat_individual',
+                  'rutEmisor': nuevoMensaje.senderRut,
+                  'nombreEmisor': widget.nombre,
+                  'chatId': 'chat_${widget.rutAmigo}',
+                }),
               );
               print('[CHAT] 🔔 NOTIFICACIÓN ENVIADA AL SERVICIO EXITOSAMENTE');
             } else {
@@ -836,24 +841,6 @@ class _PaginaIndividualWebSocketState extends State<PaginaIndividualWebSocket> {
           ],
         ),
         actions: [
-          // Botón de prueba de notificaciones
-          IconButton(
-            icon: const Icon(Icons.notifications_active, color: Colors.amber),
-            onPressed: () async {
-              print('[CHAT] 🧪 PRUEBA DE NOTIFICACIÓN INICIADA');
-              WebSocketNotificationService.showLocalNotification(
-                title: '🧪 Usuario de Prueba',
-                body: 'Esta es una notificación de prueba del chat individual',
-                payload: 'test_chat_individual',
-              );
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Notificación de prueba enviada usando el servicio existente'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white),
             onPressed: () {

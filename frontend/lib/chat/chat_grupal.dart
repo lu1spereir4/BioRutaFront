@@ -180,7 +180,13 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
             WebSocketNotificationService.showLocalNotification(
               title: '👥 $groupName',
               body: '${mensajeEnriquecido.emisorNombre}: ${mensajeEnriquecido.contenido}',
-              payload: 'chat_grupal_${widget.idViaje}',
+              payload: json.encode({
+                'tipo': 'chat_grupal',
+                'grupoId': widget.idViaje,
+                'nombreGrupo': groupName,
+                'rutEmisor': mensajeEnriquecido.emisorRut,
+                'nombreEmisor': mensajeEnriquecido.emisorNombre,
+              }),
             );
           } else {
             print('[CHAT-GRUPAL] ❌ NO MOSTRAR NOTIFICACIÓN GRUPAL:');
@@ -645,24 +651,6 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          // Botón de prueba de notificaciones grupales
-          IconButton(
-            icon: Icon(Icons.notifications_active, color: Colors.amber),
-            onPressed: () async {
-              print('[CHAT-GRUPAL] 🧪 PRUEBA DE NOTIFICACIÓN GRUPAL INICIADA');
-              WebSocketNotificationService.showLocalNotification(
-                title: '👥 ${widget.nombreViaje ?? 'Chat Grupal'}',
-                body: 'Usuario de Prueba: Esta es una notificación grupal de prueba',
-                payload: 'test_chat_grupal_${widget.idViaje}',
-              );
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Notificación grupal de prueba enviada usando el servicio existente'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-          ),
           // Botón para ver participantes y reportar
           IconButton(
             icon: Icon(Icons.people, color: Colors.white),
