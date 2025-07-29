@@ -11,6 +11,7 @@ import '../config/confGlobal.dart';
 import '../utils/token_manager.dart';
 import '../services/socket_service.dart'; // Importar SocketService
 import '../services/websocket_notification_service.dart'; // Importar WebSocket Notifications
+import '../services/amistad_notification_service.dart'; // Importar Notificaciones de Amistad
 import '../admin/admin_dashboard.dart'; // Importar AdminDashboard
 
 class LoginPage extends StatefulWidget {
@@ -219,6 +220,14 @@ class _LoginPageState extends State<LoginPage> {
               } catch (e) {
                 print('⚠️ Error al conectar notificaciones WebSocket: $e');
                 // No fallar el login por error de notificaciones
+              }
+
+              // Inicializar servicio de notificaciones de amistad
+              try {
+                await AmistadNotificationService.initialize(userRut);
+                print('👥 Servicio de notificaciones de amistad inicializado para $userRut');
+              } catch (e) {
+                print('⚠️ Error al inicializar notificaciones de amistad: $e');
               }
 
               // Navegar según el rol del usuario

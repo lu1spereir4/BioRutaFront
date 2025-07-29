@@ -255,4 +255,37 @@ class AmistadService {
       };
     }
   }
+
+  /// Obtener información de un usuario por RUT
+  static Future<Map<String, dynamic>> obtenerUsuarioPorRut(String rut) async {
+    try {
+      final headers = await _getHeaders();
+      
+      final response = await http.get(
+        Uri.parse('${confGlobal.baseUrl}/user/busquedaRut?rut=$rut'),
+        headers: headers,
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'data': data['data'],
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Error al obtener usuario',
+          'data': null,
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Error de conexión: $e',
+        'data': null,
+      };
+    }
+  }
 }

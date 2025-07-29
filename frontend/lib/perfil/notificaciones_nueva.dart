@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/amistad_service.dart';
+import '../services/amistad_notification_service.dart';
 import '../services/websocket_notification_service.dart';
 
 class NotificacionesScreen extends StatefulWidget {
@@ -44,15 +45,17 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
     }
   }
 
-  Future<void> _responderSolicitud(int idSolicitud, String respuesta, String nombreEmisor) async {
+  Future<void> _responderSolicitud(int idSolicitud, String respuesta, String nombreEmisor, String rutEmisor) async {
     setState(() {
       _isResponding = true;
     });
 
     try {
-      final resultado = await AmistadService.responderSolicitudAmistad(
+      final resultado = await AmistadNotificationService.responderSolicitudAmistadConNotificacion(
         idSolicitud: idSolicitud,
         respuesta: respuesta,
+        rutEmisor: rutEmisor,
+        nombreEmisor: nombreEmisor,
       );
 
       setState(() {
@@ -94,7 +97,7 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
     }
   }
 
-  void _mostrarDialogoConfirmacion(int idSolicitud, String respuesta, String nombreEmisor) {
+  void _mostrarDialogoConfirmacion(int idSolicitud, String respuesta, String nombreEmisor, String rutEmisor) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -122,7 +125,7 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                _responderSolicitud(idSolicitud, respuesta, nombreEmisor);
+                _responderSolicitud(idSolicitud, respuesta, nombreEmisor, rutEmisor);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: respuesta == 'aceptada' ? Colors.green : Colors.red,
@@ -397,7 +400,8 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
                                           : () => _mostrarDialogoConfirmacion(
                                               solicitud['id'], 
                                               'rechazada', 
-                                              emisor['nombreCompleto']
+                                              emisor['nombreCompleto'],
+                                              emisor['rut']
                                             ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: _isResponding ? Colors.grey[300] : Colors.red,
@@ -425,7 +429,8 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
                                           : () => _mostrarDialogoConfirmacion(
                                               solicitud['id'], 
                                               'aceptada', 
-                                              emisor['nombreCompleto']
+                                              emisor['nombreCompleto'],
+                                              emisor['rut']
                                             ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: _isResponding ? Colors.grey[300] : Colors.green,

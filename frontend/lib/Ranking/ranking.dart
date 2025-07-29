@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert'; // Para parsear JSON
 import '../config/confGlobal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/amistad_service.dart'; // Importar servicio de amistad
+import '../services/amistad_notification_service.dart'; // Importar notificaciones de amistad
 import '../helpers/notificacion_helpers.dart'; // Importar helpers de notificación
 import '../widgets/reportar_usuario_dialog.dart';
 import '../models/reporte_model.dart';
@@ -620,10 +620,11 @@ class _RankingState extends State<ranking> {
   // Función para enviar la solicitud de amistad
   Future<void> _enviarSolicitudAmistad(BuildContext context, String rutReceptor, String nombreUsuario) async {
     try {
-      // Enviar solicitud directamente sin indicador de carga
-      final resultado = await AmistadService.enviarSolicitudAmistad(
+      // Enviar solicitud directamente sin indicador de carga usando el nuevo servicio
+      final resultado = await AmistadNotificationService.enviarSolicitudAmistadConNotificacion(
         rutReceptor: rutReceptor,
         mensaje: "¿Puedo ser tu amigo?",
+        nombreReceptor: nombreUsuario,
       );
 
       if (resultado['success']) {

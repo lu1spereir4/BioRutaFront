@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../config/confGlobal.dart';
-import '../services/amistad_service.dart';
+import '../services/amistad_notification_service.dart';
 import '../utils/token_manager.dart';
 import '../helpers/notificacion_helpers.dart';
 
@@ -144,10 +144,11 @@ class _SolicitudState extends State<Solicitud> {
       });
 
       try {
-        // Enviar solicitud real usando el servicio
-        final resultado = await AmistadService.enviarSolicitudAmistad(
+        // Enviar solicitud real usando el nuevo servicio con notificaciones
+        final resultado = await AmistadNotificationService.enviarSolicitudAmistadConNotificacion(
           rutReceptor: _usuarioEncontrado!['data']['rut'],
           mensaje: 'Hola, me gustaría agregarte como amigo.',
+          nombreReceptor: _usuarioEncontrado!['data']['nombreCompleto'],
         );
 
         setState(() {

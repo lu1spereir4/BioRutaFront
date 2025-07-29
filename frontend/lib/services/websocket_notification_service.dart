@@ -908,6 +908,51 @@ class WebSocketNotificationService {
   /// Obtener el RUT del usuario actual
   static String? get currentUserRut => _currentUserRut;
   
+  /// Emitir evento WebSocket al servidor
+  static void emitEvent(String event, dynamic data) {
+    try {
+      if (_socket?.connected == true) {
+        print('📡 WebSocket - Emitiendo evento: $event con data: $data');
+        _socket!.emit(event, data);
+        print('✅ WebSocket - Evento emitido exitosamente: $event');
+      } else {
+        print('❌ WebSocket - No se puede emitir evento, socket no conectado: $event');
+      }
+    } catch (e) {
+      print('❌ WebSocket - Error emitiendo evento $event: $e');
+    }
+  }
+  
+  /// Simular evento WebSocket (para testing cuando el backend no envía eventos)
+  static void simulateWebSocketEvent(String event, dynamic data) {
+    print('🎭 WebSocket - Simulando evento: $event con data: $data');
+    
+    try {
+      switch (event) {
+        case 'solicitud_amistad':
+          _handleFriendRequestNotification(data);
+          break;
+        case 'amistad_aceptada':
+          _handleFriendAcceptedNotification(data);
+          break;
+        case 'amistad_rechazada':
+          _handleFriendRejectedNotification(data);
+          break;
+        case 'chat_individual':
+          _handleChatIndividualNotification(data);
+          break;
+        case 'chat_grupal':
+          _handleChatGrupalNotification(data);
+          break;
+        default:
+          print('⚠️ WebSocket - Evento no reconocido para simulación: $event');
+      }
+      print('✅ WebSocket - Evento simulado exitosamente: $event');
+    } catch (e) {
+      print('❌ WebSocket - Error simulando evento $event: $e');
+    }
+  }
+
   /// Manejar notificación de chat individual
   static void _handleChatIndividualNotification(dynamic data) {
     try {
