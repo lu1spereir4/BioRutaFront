@@ -75,6 +75,10 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
     super.initState();
     print('[CHAT-GRUPAL] 🚀 INICIANDO CHAT GRUPAL - initState()');
     print('🚗🔄 Inicializando chat grupal para viaje: ${widget.idViaje}');
+    
+    // Inicializar lista filtrada como copia de mensajes (vacía inicialmente)
+    mensajesFiltrados = List.from(mensajes);
+    
     _initializarDatos();
     print('[CHAT-GRUPAL] 🚀 CHAT GRUPAL INICIADO COMPLETAMENTE');
   }
@@ -140,8 +144,9 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
       if (mounted) {
         setState(() {
           mensajes = mensajesResult;
-          mensajesFiltrados = mensajesResult; // Inicializar lista filtrada
           participantes = participantesResult;
+          // Regenerar lista filtrada basada en la búsqueda actual
+          _regenerateFilteredMessages();
         });
       }
       
@@ -175,10 +180,8 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
         if (mounted) {
           setState(() {
             mensajes.add(mensajeEnriquecido);
-            // Actualizar lista filtrada si no hay búsqueda activa o si el mensaje coincide
-            if (!isSearching || _messageMatchesSearch(mensajeEnriquecido, searchQuery)) {
-              mensajesFiltrados.add(mensajeEnriquecido);
-            }
+            // Regenerar lista filtrada en lugar de agregar directamente
+            _regenerateFilteredMessages();
           });
           
           // Mostrar notificación solo si el mensaje lo envió otro usuario
@@ -386,6 +389,7 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
           final index = mensajes.indexWhere((m) => m.id == mensajeId);
           if (index != -1) {
             mensajes[index] = mensajeEnriquecido;
+            _regenerateFilteredMessages();
           }
         });
       }
@@ -397,6 +401,7 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
           final index = mensajes.indexWhere((m) => m.id == mensajeId);
           if (index != -1) {
             mensajes[index] = MensajeGrupal.fromJson(data);
+            _regenerateFilteredMessages();
           }
         });
       }
@@ -451,6 +456,17 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
 
   // --- Métodos de Búsqueda ---
   
+  /// Regenerar la lista filtrada basada en la búsqueda actual
+  void _regenerateFilteredMessages() {
+    if (searchQuery.isEmpty) {
+      mensajesFiltrados = List.from(mensajes);
+    } else {
+      mensajesFiltrados = mensajes.where((mensaje) => 
+        _messageMatchesSearch(mensaje, searchQuery)
+      ).toList();
+    }
+  }
+  
   /// Verificar si un mensaje coincide con la consulta de búsqueda
   bool _messageMatchesSearch(MensajeGrupal mensaje, String query) {
     if (query.isEmpty) return true;
@@ -474,15 +490,8 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
   void _filterMessages(String query) {
     setState(() {
       searchQuery = query;
-      if (query.isEmpty) {
-        mensajesFiltrados = List.from(mensajes);
-        isSearching = false;
-      } else {
-        isSearching = true;
-        mensajesFiltrados = mensajes.where((mensaje) => 
-          _messageMatchesSearch(mensaje, query)
-        ).toList();
-      }
+      isSearching = query.isNotEmpty;
+      _regenerateFilteredMessages();
     });
   }
   
@@ -492,7 +501,7 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
     setState(() {
       searchQuery = '';
       isSearching = false;
-      mensajesFiltrados = List.from(mensajes);
+      _regenerateFilteredMessages();
     });
   }
 
@@ -503,7 +512,7 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
     
     setState(() {
       mensajes.removeWhere((m) => m.id == mensajeId);
-      mensajesFiltrados.removeWhere((m) => m.id == mensajeId);
+      _regenerateFilteredMessages();
     });
   }
 
