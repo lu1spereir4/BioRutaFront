@@ -311,6 +311,9 @@ class _PublicarViajePaso2State extends State<PublicarViajePaso2> {
       pickedTime.minute,
     );
 
+    // Sumar 4 horas para corregir el desfase horario antes de enviar al backend
+    final DateTime adjustedDateTime = combinedDateTime.add(const Duration(hours: 4));
+
     // Validar que no sea una hora pasada si es hoy
     if (isToday && combinedDateTime.isBefore(now.add(const Duration(minutes: 30)))) {
       if (mounted) {
@@ -333,7 +336,7 @@ class _PublicarViajePaso2State extends State<PublicarViajePaso2> {
         
         final validacion = await ViajeService.validarPublicacionViaje(
           fechaHoraIda: _fechaHoraIda!,
-          fechaHoraVuelta: combinedDateTime,
+          fechaHoraVuelta: adjustedDateTime,
           origenLat: origen.lat,
           origenLng: origen.lon,
           destinoLat: destino.lat,
@@ -387,9 +390,9 @@ class _PublicarViajePaso2State extends State<PublicarViajePaso2> {
     // Actualizar el estado
     setState(() {
       if (esIda) {
-        _fechaHoraIda = combinedDateTime;
+        _fechaHoraIda = adjustedDateTime;
       } else {
-        _fechaHoraVuelta = combinedDateTime;
+        _fechaHoraVuelta = adjustedDateTime;
       }
     });
 
