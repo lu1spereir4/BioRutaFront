@@ -358,6 +358,7 @@ class _MapPageState extends State<MapPage> {
                     child: GestureDetector(
                       onTap: () async {
                         await _seleccionarFecha();
+                        setModalState(() {}); // Actualizar modal inmediatamente después de seleccionar fecha
                       },
                       child: Container(
                         padding: const EdgeInsets.all(16),
