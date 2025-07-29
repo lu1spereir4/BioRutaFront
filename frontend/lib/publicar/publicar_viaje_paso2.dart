@@ -19,6 +19,8 @@ class PublicarViajePaso2 extends StatefulWidget {
 class _PublicarViajePaso2State extends State<PublicarViajePaso2> {
   DateTime? _fechaHoraIda;
   DateTime? _fechaHoraVuelta;
+  DateTime? _fechaHoraIdaOriginal; // Para mostrar en UI
+  DateTime? _fechaHoraVueltaOriginal; // Para mostrar en UI
   bool _viajeIdaYVuelta = false;
 
   @override
@@ -72,6 +74,7 @@ class _PublicarViajePaso2State extends State<PublicarViajePaso2> {
                                 _viajeIdaYVuelta = value!;
                                 if (!_viajeIdaYVuelta) {
                                   _fechaHoraVuelta = null;
+                                  _fechaHoraVueltaOriginal = null;
                                 }
                               });
                             },
@@ -100,14 +103,14 @@ class _PublicarViajePaso2State extends State<PublicarViajePaso2> {
               _buildDateTimeCard(
                 title: "Viaje de ida", 
                 icon: Icons.flight_takeoff, 
-                fechaHora: _fechaHoraIda, 
+                fechaHora: _fechaHoraIdaOriginal, 
                 onSelectDateTime: () => _seleccionarFechaHora(true)
               ),
               const SizedBox(height: 20),
               if (_viajeIdaYVuelta) _buildDateTimeCard(
                 title: "Viaje de vuelta", 
                 icon: Icons.flight_land, 
-                fechaHora: _fechaHoraVuelta, 
+                fechaHora: _fechaHoraVueltaOriginal, 
                 onSelectDateTime: () => _seleccionarFechaHora(false)
               ),
               const SizedBox(height: 40),
@@ -244,8 +247,8 @@ class _PublicarViajePaso2State extends State<PublicarViajePaso2> {
   }
 
   bool get _puedeAvanzar {
-    if (_fechaHoraIda == null) return false;
-    if (_viajeIdaYVuelta && _fechaHoraVuelta == null) return false;
+    if (_fechaHoraIdaOriginal == null) return false;
+    if (_viajeIdaYVuelta && _fechaHoraVueltaOriginal == null) return false;
     return true;
   }
 
@@ -390,9 +393,11 @@ class _PublicarViajePaso2State extends State<PublicarViajePaso2> {
     // Actualizar el estado
     setState(() {
       if (esIda) {
-        _fechaHoraIda = adjustedDateTime;
+        _fechaHoraIda = adjustedDateTime; // Para enviar al backend
+        _fechaHoraIdaOriginal = combinedDateTime; // Para mostrar en UI
       } else {
-        _fechaHoraVuelta = adjustedDateTime;
+        _fechaHoraVuelta = adjustedDateTime; // Para enviar al backend
+        _fechaHoraVueltaOriginal = combinedDateTime; // Para mostrar en UI
       }
     });
 
