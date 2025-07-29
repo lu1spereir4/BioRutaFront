@@ -38,11 +38,17 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
   
   // --- Variables de Estado ---
   List<MensajeGrupal> mensajes = [];
+  List<MensajeGrupal> mensajesFiltrados = []; // Para la búsqueda
   List<ParticipanteChat> participantes = [];
   bool isLoading = true;
   bool isConnected = false;
   String? errorMessage;
   String? userRut;
+  
+  // --- Variables de Búsqueda ---
+  bool isSearching = false;
+  String searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
   
   // --- Controladores ---
   final TextEditingController _messageController = TextEditingController();
@@ -134,6 +140,7 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
       if (mounted) {
         setState(() {
           mensajes = mensajesResult;
+          mensajesFiltrados = mensajesResult; // Inicializar lista filtrada
           participantes = participantesResult;
         });
       }
@@ -168,6 +175,10 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
         if (mounted) {
           setState(() {
             mensajes.add(mensajeEnriquecido);
+            // Actualizar lista filtrada si no hay búsqueda activa o si el mensaje coincide
+            if (!isSearching || _messageMatchesSearch(mensajeEnriquecido, searchQuery)) {
+              mensajesFiltrados.add(mensajeEnriquecido);
+            }
           });
           
           // Mostrar notificación solo si el mensaje lo envió otro usuario
@@ -438,6 +449,53 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
     return MensajeGrupal.fromJson(data);
   }
 
+  // --- Métodos de Búsqueda ---
+  
+  /// Verificar si un mensaje coincide con la consulta de búsqueda
+  bool _messageMatchesSearch(MensajeGrupal mensaje, String query) {
+    if (query.isEmpty) return true;
+    
+    final queryLower = query.toLowerCase();
+    
+    // Buscar en el contenido del mensaje
+    if (mensaje.contenido.toLowerCase().contains(queryLower)) {
+      return true;
+    }
+    
+    // Buscar en el nombre del emisor
+    if (mensaje.emisorNombre.toLowerCase().contains(queryLower)) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /// Filtrar mensajes según la consulta de búsqueda
+  void _filterMessages(String query) {
+    setState(() {
+      searchQuery = query;
+      if (query.isEmpty) {
+        mensajesFiltrados = List.from(mensajes);
+        isSearching = false;
+      } else {
+        isSearching = true;
+        mensajesFiltrados = mensajes.where((mensaje) => 
+          _messageMatchesSearch(mensaje, query)
+        ).toList();
+      }
+    });
+  }
+  
+  /// Limpiar búsqueda y mostrar todos los mensajes
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() {
+      searchQuery = '';
+      isSearching = false;
+      mensajesFiltrados = List.from(mensajes);
+    });
+  }
+
   void _handleMessageDeleted(Map<String, dynamic> data) {
     if (!mounted) return;
     
@@ -445,6 +503,7 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
     
     setState(() {
       mensajes.removeWhere((m) => m.id == mensajeId);
+      mensajesFiltrados.removeWhere((m) => m.id == mensajeId);
     });
   }
 
@@ -617,6 +676,7 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
     
     // Limpiar controladores
     _messageController.dispose();
+    _searchController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
     
@@ -629,33 +689,62 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
       backgroundColor: fondo,
       appBar: AppBar(
         backgroundColor: secundario,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.nombreViaje ?? 'Chat de Viaje',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+        title: isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: 'Buscar mensajes...',
+                  hintStyle: TextStyle(color: Colors.white70),
+                  border: InputBorder.none,
+                ),
+                onChanged: _filterMessages,
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.nombreViaje ?? 'Chat de Viaje',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '${participantes.length} participantes',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            Text(
-              '${participantes.length} participantes',
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          // Botón para ver participantes y reportar
-          IconButton(
-            icon: Icon(Icons.people, color: Colors.white),
-            onPressed: _mostrarMenuParticipantes,
-          ),
+          if (isSearching) ...[
+            // Botón para limpiar búsqueda
+            IconButton(
+              icon: const Icon(Icons.clear, color: Colors.white),
+              onPressed: _clearSearch,
+            ),
+          ] else ...[
+            // Botón de búsqueda
+            IconButton(
+              icon: const Icon(Icons.search, color: Colors.white),
+              onPressed: () {
+                setState(() {
+                  isSearching = true;
+                });
+              },
+            ),
+            // Botón para ver participantes y reportar
+            IconButton(
+              icon: const Icon(Icons.people, color: Colors.white),
+              onPressed: _mostrarMenuParticipantes,
+            ),
+          ],
           // Indicador de conexión
           Container(
             margin: const EdgeInsets.only(right: 16),
@@ -707,51 +796,84 @@ class ChatGrupalScreenState extends State<ChatGrupalScreen> {
                     
                     // Lista de mensajes
                     Expanded(
-                      child: mensajes.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.chat_bubble_outline,
-                                    size: 64,
-                                    color: Colors.grey[400],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No hay mensajes aún',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Sé el primero en escribir algo',
-                                    style: TextStyle(
-                                      color: Colors.grey[500],
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
+                      child: Column(
+                        children: [
+                          // Mostrar información de búsqueda si está activa
+                          if (isSearching) 
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(8),
+                              color: principal.withOpacity(0.1),
+                              child: Text(
+                                searchQuery.isEmpty 
+                                    ? 'Escribe para buscar mensajes...'
+                                    : 'Encontrados: ${mensajesFiltrados.length} mensajes',
+                                style: TextStyle(
+                                  color: principal,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                            )
-                          : ListView.builder(
-                              controller: _scrollController,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              itemCount: mensajes.length,
-                              itemBuilder: (context, index) {
-                                return MensajeGrupalWidget(
-                                  mensaje: mensajes[index],
-                                  isOwn: mensajes[index].emisorRut == userRut,
-                                  onEdit: _editMessage,
-                                  onDelete: _deleteMessage,
-                                );
-                              },
                             ),
+                          
+                          // Lista de mensajes filtrados
+                          Expanded(
+                            child: mensajesFiltrados.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          isSearching 
+                                              ? Icons.search_off 
+                                              : Icons.chat_bubble_outline,
+                                          size: 64,
+                                          color: Colors.grey[400],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          isSearching 
+                                              ? 'No se encontraron mensajes'
+                                              : 'No hay mensajes aún',
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          isSearching 
+                                              ? 'Intenta con otros términos de búsqueda'
+                                              : 'Sé el primero en escribir algo',
+                                          style: TextStyle(
+                                            color: Colors.grey[500],
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    controller: _scrollController,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    itemCount: mensajesFiltrados.length,
+                                    itemBuilder: (context, index) {
+                                      final mensaje = mensajesFiltrados[index];
+                                      return MensajeGrupalWidget(
+                                        mensaje: mensaje,
+                                        isOwn: mensaje.emisorRut == userRut,
+                                        onEdit: _editMessage,
+                                        onDelete: _deleteMessage,
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ],
+                      ),
                     ),
                     
                     // Área de escritura
